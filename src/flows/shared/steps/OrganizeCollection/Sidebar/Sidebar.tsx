@@ -9,6 +9,10 @@ import {
   useSidebarNftsState,
   useCollectionEditorActions,
 } from 'contexts/collectionEditor/CollectionEditorContext';
+import useFetcher from 'contexts/swr/useFetcher';
+import { triggerOpenseaSync } from 'components/WalletSelector/authRequestUtils';
+import RefreshIcon from 'assets/icons/refresh.svg';
+import { useAuthenticatedUserAddress } from 'hooks/api/users/useUser';
 import { EditModeNft } from '../types';
 import SidebarNftIcon, { StyledSidebarNftIcon } from './SidebarNftIcon';
 
@@ -19,6 +23,8 @@ function Sidebar() {
     stageNfts,
     unstageNfts,
   } = useCollectionEditorActions();
+  const fetcher = useFetcher();
+  const userAddress = useAuthenticatedUserAddress();
 
   const isAllNftsSelected = useMemo(() => !sidebarNfts.some((nft: EditModeNft) => !nft.isSelected), [sidebarNfts]);
 
@@ -44,10 +50,18 @@ function Sidebar() {
     setNftsIsSelected(sidebarNfts, false);
   }, [sidebarNfts, setNftsIsSelected, unstageNfts]);
 
+  const handleRefreshClick = useCallback(() => {
+    void triggerOpenseaSync(userAddress, fetcher);
+  }, [fetcher, userAddress]);
+
   return (
     <StyledSidebar>
       <Header>
         <BodyMedium>Your NFTs</BodyMedium>
+        <Spacer width={16}/>
+        <StyledRefreshButton onClick={handleRefreshClick} title="Refresh NFTs">
+          <Icon src={RefreshIcon}/>
+        </StyledRefreshButton>
         {isAllNftsSelected ? (
           <TextButton
             text={`Deselect All (${sidebarNfts.length})`}
@@ -90,6 +104,21 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+`;
+
+const StyledRefreshButton = styled.button`
+  display: flex;
+  border: none;
+  background: none;
+  cursor: pointer;
+  &:hover {
+    filter: brightness(50%);
+  }
+`;
+
+const Icon = styled.img`
+  width: 12px;
+  height: 12px;
 `;
 
 const Selection = styled.div`
